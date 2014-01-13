@@ -8,5 +8,6 @@ generator, but could be adapted to solve any sudoku puzzle, I suppose.
 Just pass the puzzle in to stdin.
 
 Ex:
-    $ cat unsolved_puzzle.txt > python solve.py
+
+    $ python solve.py < unsolved_puzzle.txt
 
