@@ -20,16 +20,34 @@ class Board:
             print s
 
     def is_valid(self):
-        for st in self.nine_sets():
-            if not st == nine_set:
+        for n in xrange(81):
+            if not self.valid(n / 9, n % 9):
                 return False
         return True
+
+    def valid(self, x, y):
+        return self.get_col_set(x) == nine_set and 
+                self.get_row_set(y) == nine_set and 
+                self.get_sq_set(x, y) == nine_set
+        
+    def get_col_set(self, x):
+        return set(self.board[x][y] for y in xrange(9))
+
+    def get_row_set(self, y):
+        return set(self.board[x][y] for x in xrange(9))
+
+    def get_sq_set(self, x, y):
+        o_x = (x / 3) * 3
+        o_y = (y / 3) * 3
+        s = set(self.board[o_x][o_y:o_y+3])
+        s.update(self.board[o_x+1][o_y:o_y+3])
+        s.update(self.board[o_x+2][o_y:o_y+3])
+        return s
 
     def nine_sets(self):
         for x in xrange(9):  # rows
             yield set(self.board[x])
         for y in xrange(9):  # cols
-            yield set(self.board[x][y] for x in xrange(9))
         for x in xrange(3):
             for y in xrange(3):
                 o_x = 3*x
@@ -63,31 +81,39 @@ class Board:
     def increment(self):
         self.incr_one(0,0)
 
-    def permute(self, x, y):
-        next_x, next_y = self.next_xy(x, y)
-        if next_x is None:
+    def permute(self, n):
+        next_n = self.next_xy(n)
+        if next_n is None:
             yield self
             return
+        x = n % 9
+        y = n / 9
+        next_x = next_n % 9
+        next_y = next_n / 9
         for v in self.opts[x][y]:
             self.set(x, y, v)
-            for perm in self.permute(next_x, next_y):
+            for perm in self.permute(next_n):
                 yield perm
 
-    def next_xy(self, x, y):
-        next_x, next_y = (1, y+1) if x == 8 else (x+1, y)
-        if next_y >= 9:
-            return (None, None)
+    def next_xy(self, n):
+        next_n = n+1
+        if next_n >= 81:
+            return None
+        next_x = next_n % 9
+        next_y = next_n / 9
         while self.is_known(next_x, next_y):
-            next_x, next_y = (1, next_y+1) if next_x == 8 else (next_x+1, next_y)
-            if next_y >= 9:
-                return (None, None)
-        return (next_x, next_y)
+            next_n += 1
+            if next_n >= 81:
+                return None
+            next_x = next_n % 9
+            next_y = next_n / 9
+        return next_n
 
     def conflicts(self, x, y):
         """Returns a set containing all of the known conflicts that a certain
         cell has."""
-        col = set(self.get(i, y) if self.known.get(i,y) != 0 else 0 for i in xrange(9))
-        row = set(self.get(x, i) if self.known.get(x,i) != 0 else 0 for i in xrange(9))
+        col = set(self.get(i, y) for i in xrange(9))
+        row = set(self.get(x, i) for i in xrange(9))
         o_x = (x / 3) * 3
         o_y = (y / 3) * 3
         s = set(self.board[o_x][o_y:o_y+3])
@@ -139,9 +165,9 @@ class Solver:
         self.board.start()
     
     def solutions(self):
-        print(sum(1 for x in self.board.permute(0, 0)))
+        print("%d permutations" % sum(1 for x in self.board.permute(0)))
         return 
-        for board in self.board.permute(0, 0):
+        for board in self.board.permute(0):
             if self.board.is_valid():
                 yield copy.deepcopy(self.board)
 
