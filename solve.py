@@ -6,18 +6,10 @@ nine_set = set(x+1 for x in xrange(9))
 
 class Board:
     def __init__(self):
-        self.board = [[0 for x in xrange(9)] for x in xrange(9)] 
+        self.sets = [[set(nine_set) for x in xrange(9)] for x in xrange(9)]
 
     def set(self, x, y, v):
-        self.board[x][y] = v
-
-    def get(self, x, y):
-        return self.board[x][y]
-
-    def disp(self):
-        for x in xrange(9):
-            s = " ".join(str(self.get(x,y)) for y in xrange(9))
-            print s
+        self.sets[x][y] = set(v)
 
     def is_valid(self):
         for n in xrange(81):
@@ -29,7 +21,7 @@ class Board:
         return (self.get_col_set(x) == nine_set and 
                 self.get_row_set(y) == nine_set and 
                 self.get_sq_set(x, y) == nine_set)
-        
+
     def get_col_set(self, x):
         return set(self.board[x][y] for y in xrange(9))
 
@@ -44,18 +36,8 @@ class Board:
         s.update(self.board[o_x+2][o_y:o_y+3])
         return s
 
-    def nine_sets(self):
-        for x in xrange(9):  # rows
-            yield set(self.board[x])
-        #for y in xrange(9):  # cols
-        for x in xrange(3):
-            for y in xrange(3):
-                o_x = 3*x
-                o_y = 3*y
-                s = set(self.board[o_x][o_y:o_y+3])
-                s.update(self.board[o_x+1][o_y:o_y+3])
-                s.update(self.board[o_x+2][o_y:o_y+3])
-                yield s
+    def update_set(self, x, y):
+        self.sets[x][y] = self.sets[x][y] - self.conflicts(x, y)
 
     def start(self):
         self.known = copy.deepcopy(self)
@@ -112,8 +94,12 @@ class Board:
     def conflicts(self, x, y):
         """Returns a set containing all of the known conflicts that a certain
         cell has."""
-        col = set(self.get(i, y) for i in xrange(9))
-        row = set(self.get(x, i) for i in xrange(9))
+        s = set()
+        for i in xrange(9):
+            if len(self.sets[x][i]) == 1:
+                s.update(self.sets[x][i]
+            if len(self.sets[i][y]) == 1:
+                s.update(self.sets[i][y]
         o_x = (x / 3) * 3
         o_y = (y / 3) * 3
         s = set(self.board[o_x][o_y:o_y+3])
@@ -154,8 +140,8 @@ class BoardParser:
                 continue
             for n in xrange(9):
                 v = res.group(n+1)
-                v = 0 if v is " " else int(v)
-                b.set(n, y, v)
+                if v is not 0:
+                    b.set(n, y, int(v))
             y += 1
         return b
 
