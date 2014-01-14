@@ -41,27 +41,44 @@ class Board:
 
     def start(self):
         self.known = copy.deepcopy(self)
-        for x in xrange(9):
-            for y in xrange(9):
-                if self.get(x, y) == 0:
-                    self.set(x, y, 1)
+        # for x in xrange(9):
+            # for y in xrange(9):
+                # if self.get(x, y) == 0:
+                    # self.set(x, y, 1)
         self.opts = copy.deepcopy(self.board)
+        mult = 1
         for x in xrange(9):
             for y in xrange(9):
                 self.opts[x][y] = nine_set - self.conflicts(x, y)
-                if len(self.opts[x][y]) == 1:
+                if len(self.opts[x][y]) == 1 and not self.is_known(x, y):
                     self.set(x, y, self.opts[x][y].pop())
                     self.known.set(x, y, self.get(x, y))
+                if not self.is_known(x, y):
+                    mult *= len(self.opts[x][y])
+        print mult
+
+    def is_known(self, x, y):
+        return self.known.get(x, y) != 0
 
     def increment(self):
         self.incr_one(0,0)
+
+    def permute(self, x, y):
+        next_x, next_y = self.next_xy(x, y)
+        if next_x is None:
+            yield self
+            return
+        for v in self.opts[x][y]:
+            self.set(x, y, v)
+            for perm in self.permute(next_x, next_y):
+                yield perm
 
     def next_xy(self, x, y):
         next_x, next_y = (1, y+1) if x == 8 else (x+1, y)
         if next_y >= 9:
             return (None, None)
-        while self.known.get(next_x, next_y) != 0:
-            next_x, next_y = (1, y+1) if x == 8 else (x+1, y)
+        while self.is_known(next_x, next_y):
+            next_x, next_y = (1, next_y+1) if next_x == 8 else (next_x+1, next_y)
             if next_y >= 9:
                 return (None, None)
         return (next_x, next_y)
@@ -121,14 +138,12 @@ class Solver:
         self.board = board
         self.board.start()
     
-    def next_solution(self):
-        while not self.board.is_valid():
-            if self.board.get(0, 0) == 10:
-                return None
-            self.board.increment()
-        soln = copy.deepcopy(self.board)
-        self.board.increment()
-        return soln
+    def solutions(self):
+        print(sum(1 for x in self.board.permute(0, 0)))
+        return 
+        for board in self.board.permute(0, 0):
+            if self.board.is_valid():
+                yield copy.deepcopy(self.board)
 
 def main():
     lines = sys.stdin.readlines()
@@ -136,12 +151,10 @@ def main():
     b = bp.parse(lines)
     solver = Solver(b)
     n_solns = 0
-    soln = solver.next_solution()
-    while soln is not None:
-        n_solns += 1
+    for soln in solver.solutions():
         soln.disp()
-        soln = solver.next_solution()
-    print "% solution(s) found" % n_solns
+        n_solns += 1
+    print "%d solution(s) found" % n_solns
 
 
 if __name__ == "__main__":
