@@ -26,9 +26,9 @@ class Board:
         return True
 
     def valid(self, x, y):
-        return self.get_col_set(x) == nine_set and 
+        return (self.get_col_set(x) == nine_set and 
                 self.get_row_set(y) == nine_set and 
-                self.get_sq_set(x, y) == nine_set
+                self.get_sq_set(x, y) == nine_set)
         
     def get_col_set(self, x):
         return set(self.board[x][y] for y in xrange(9))
@@ -47,7 +47,7 @@ class Board:
     def nine_sets(self):
         for x in xrange(9):  # rows
             yield set(self.board[x])
-        for y in xrange(9):  # cols
+        #for y in xrange(9):  # cols
         for x in xrange(3):
             for y in xrange(3):
                 o_x = 3*x
