@@ -1,15 +1,25 @@
 # Sudoku Solver
 
-This python script was written specifcally for /u/Trebek604's sudoku
-generator, but could be adapted to solve any sudoku puzzle, I suppose.
-
-[Source](http://www.reddit.com/r/puzzles/comments/1v346s/sudoku_builder_puzzle_201401121/)
+An attempt at a [sudoku](http://en.wikipedia.org/wiki/Sudoku) solver written in
+Python.
 
 ## Usage
 
-Just pass the puzzle in to stdin.
+Pass a puzzle in via standard input. The input is expected to be a single line
+containing 81 characters. A blank cell can be represented by any character that
+isn't a digit 1-9 or a new line.
 
 Ex:
 
-    $ python solve.py < unsolved_puzzle.txt
+    $ python solver.py < unsolved_puzzle.txt
 
+You can also display a progress percentage while solving the puzzles. The
+percentage goes to standard error though, so you'll probably want to catch
+standard output in a file.
+
+    $ python solver.py -p < puzzles/random1011.txt > results/random1011.log
+
+## Performance
+
+You can find some sample puzzles in the `puzzles/` directory and see the
+results in the `results/` directory.

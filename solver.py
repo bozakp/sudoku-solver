@@ -100,7 +100,8 @@ class Solver:
             self.opts.minus(i, v)
 
     def solos(self):
-        """Updates the board where there is only one option for a cell.
+        """Updates the board where there is only one option for a cell, or
+        if the cell is the only option for a digit in the row/column/square.
         Returns None if no cells were updated, otherwise, returns the index
         of one of the cells that was updated"""
         c = None
@@ -193,14 +194,20 @@ def solve_puzzle(line):
     return c
 
 def main():
+    prog = False
+    if len(sys.argv) >= 2:
+        prog =  sys.argv[1] == "-p"
     lines = sys.stdin.readlines()
     s = 0
     for i in xrange(len(lines)):
         start = time.time()
         solve_puzzle(lines[i])
         s += time.time() - start
-        sys.stderr.write(str(i)+"\n")
+        if prog:
+            sys.stderr.write("\r %5.1f%% (%d/%d)" % (float(i+1)/len(lines)*100, i+1, len(lines)))
         print("Puzzle: %4d    Time: %7.3f" % (i+1, time.time() - start))
+    if prog:
+        sys.stderr.write("\n")
     print("Average time: %f" % (float(s)/len(lines)))
 
 if __name__ == "__main__":
