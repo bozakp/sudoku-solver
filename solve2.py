@@ -15,6 +15,9 @@ class Board:
     def set(self, n, v):
         self.b[n] = v
 
+    def get_all(self):
+        return "".join(str(i) for i in self.b)
+
     def show(self):
         for y in xrange(9):
             print " ".join(str(x) for x in self.b[9*y:9*y+9])
@@ -33,16 +36,26 @@ class Conflicts:
         y = n / 9
         sx = (x / 3) * 3
         sy = (y / 3) * 3
-        s = set()
+        s1 = set()
+        s2 = set()
+        s3 = set()
         for i in xrange(9):
-            s.add(x + 9*i)
-            s.add(9*y + i)
-            s.add(9*(sy + i / 3)  + (sx + i % 3))
-        s.remove(n)
-        return s
+            s1.add(x + 9*i)
+            s2.add(9*y + i)
+            s3.add(9*(sy + i / 3)  + (sx + i % 3))
+        s1.remove(n)
+        s2.remove(n)
+        s3.remove(n)
+        return [s1, s2, s3]
+
+    def get_sets(self, n):
+        return self.con[n]
 
     def get(self, n):
-        return self.con[n]
+        s = set()
+        for se in self.con[n]:
+            s |= se
+        return s
 
 
 class Options:
@@ -98,10 +111,35 @@ class Solver:
                 v = self.opts.get(i).pop()
                 self.set_known(i, v)
                 c = i
+        for i in xrange(81):
+            if self.opts.get(i) is None:
+                continue
+            sets = self.con.get_sets(i)
+            my_opts = self.opts.get(i)
+            for s in sets:
+                remaining = set(my_opts)
+                for i_cell in s:
+                    if self.opts.get(i_cell) is None:
+                        v = self.board.get(i_cell)
+                        if v in remaining:
+                            remaining.remove(v)
+                    else:
+                        remaining -= self.opts.get(i_cell)
+                if len(remaining) == 1:
+                    v = remaining.pop()
+                    self.set_known(i, v)
+                    c = i
         return c
+
+    def all_solos(self):
+        while self.solos() is not None:
+            pass
 
     def show(self):
         self.board.show()
+
+    def show_line(self):
+        print(self.board.get_all())
     
     def is_valid(self):
         for i in xrange(81):
@@ -125,6 +163,7 @@ class Solver:
             cpy = copy.deepcopy(self)
             for v in self.opts.get(n):
                 self.set_known(n, v)
+                self.all_solos()
                 if n == 80:
                     yield self
                 else:
@@ -144,23 +183,25 @@ def solve_puzzle(line):
     bp = BoardParser()
     b = bp.parse(line)
     solver = Solver(b)
-    while solver.solos() is not None:
-        pass
+    solver.all_solos()
     c = 0
     for soln in solver.permutations():
         if soln.is_valid():
+            soln.show_line()
             c += 1
+            break
     return c
 
 def main():
     lines = sys.stdin.readlines()
     s = 0
-    for i in xrange(1):
+    for i in xrange(len(lines)):
         start = time.time()
         solve_puzzle(lines[i])
         s += time.time() - start
-        print(i)
-    print("Average time: %f" % (float(s)/50.0))
+        sys.stderr.write(str(i)+"\n")
+        print("Puzzle: %4d    Time: %7.3f" % (i+1, time.time() - start))
+    print("Average time: %f" % (float(s)/len(lines)))
 
 if __name__ == "__main__":
     main()
